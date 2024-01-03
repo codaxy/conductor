@@ -1,4 +1,4 @@
-version: '2.3'
+version: '3.8'
 
 services:
   conductor-server:
@@ -29,6 +29,9 @@ services:
       options:
         max-size: "1k"
         max-file: "3"
+    secrets:
+      - source: config-postgres.properties
+        target: /app/config/config-postgres.properties
 
   conductor-postgres:
     image: postgres
@@ -52,9 +55,30 @@ services:
         max-size: "1k"
         max-file: "3"
 
+  rabbitmq:
+    image: rabbitmq:3.12.6-management-alpine
+    container_name: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+      - rabbitmq-log:/var/log/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - internal
+
 volumes:
+  rabbitmq-data:
+  rabbitmq-log:
   pgdata-conductor:
     driver: local
 
 networks:
   internal:
+
+secrets:
+  config-postgres.properties:
+    file: server/config/config-postgres.properties
