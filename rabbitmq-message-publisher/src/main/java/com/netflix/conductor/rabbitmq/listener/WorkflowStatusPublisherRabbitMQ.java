@@ -24,12 +24,36 @@ public class WorkflowStatusPublisherRabbitMQ implements WorkflowStatusListener {
 
     private final Logger LOGGER = LoggerFactory.getLogger(WorkflowStatusPublisherRabbitMQ.class);
     private final RabbitMQService rabbitMQService;
-    private final String EXCHANGE_NAME;
+    private final RabbitMQProperties rabbitMQProperties;
 
     public WorkflowStatusPublisherRabbitMQ(
             RabbitMQService rabbitMQService, RabbitMQProperties rabbitMQProperties) {
         this.rabbitMQService = rabbitMQService;
-        this.EXCHANGE_NAME = rabbitMQProperties.getWorkflowStatusExchange();
+        this.rabbitMQProperties = rabbitMQProperties;
+    }
+
+    @Override
+    public void onWorkflowCompletedIfEnabled(WorkflowModel workflow) {
+        if (workflow.getWorkflowDefinition().isWorkflowStatusListenerEnabled()
+                || rabbitMQProperties.isAlwaysPublishWorkflowStatusEnabled()) {
+            onWorkflowCompleted(workflow);
+        }
+    }
+
+    @Override
+    public void onWorkflowTerminatedIfEnabled(WorkflowModel workflow) {
+        if (workflow.getWorkflowDefinition().isWorkflowStatusListenerEnabled()
+                || rabbitMQProperties.isAlwaysPublishWorkflowStatusEnabled()) {
+            onWorkflowTerminated(workflow);
+        }
+    }
+
+    @Override
+    public void onWorkflowFinalizedIfEnabled(WorkflowModel workflow) {
+        if (workflow.getWorkflowDefinition().isWorkflowStatusListenerEnabled()
+                || rabbitMQProperties.isAlwaysPublishWorkflowStatusEnabled()) {
+            onWorkflowFinalized(workflow);
+        }
     }
 
     @Override
@@ -42,12 +66,20 @@ public class WorkflowStatusPublisherRabbitMQ implements WorkflowStatusListener {
         publishMessage(workflow);
     }
 
+    @Override
+    public void onWorkflowFinalized(WorkflowModel workflow) {
+        publishMessage(workflow);
+    }
+
     private void publishMessage(WorkflowModel workflow) {
         try {
-            rabbitMQService.publishMessage(EXCHANGE_NAME, workflow);
+            rabbitMQService.publishMessage(
+                    rabbitMQProperties.getWorkflowStatusExchange(), workflow);
         } catch (Exception e) {
             LOGGER.error(
-                    "Failed to publish message to exchange: {}. Exception: {}", EXCHANGE_NAME, e);
+                    "Failed to publish message to exchange: {}. Exception: {}",
+                    rabbitMQProperties.getWorkflowStatusExchange(),
+                    e);
             throw new RuntimeException(e);
         }
     }
