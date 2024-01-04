@@ -79,6 +79,7 @@ include 'nats-streaming'
 include 'kafka-event-queue'
 
 include 'test-harness'
+include 'rabbitmq-message-publisher'
 
 rootProject.children.each {it.name="conductor-${it.name}"}
 
