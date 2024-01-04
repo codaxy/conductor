@@ -4,9 +4,11 @@
 # ===========================================================================================================
 # 0. Builder stage 1
 # ===========================================================================================================
-FROM openjdk:17-bullseye AS builder
+FROM alpine:3.18 AS builder
 
 LABEL maintainer="Orkes OSS <oss@orkes.io>"
+
+RUN apk add openjdk17
 
 # Copy the project directly onto the image
 COPY . /conductor
