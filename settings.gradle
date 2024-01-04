@@ -77,6 +77,8 @@ include 'nats'
 include 'nats-streaming'
 
 include 'test-harness'
+include 'rabbitmq-message-publisher'
 
 
 rootProject.children.each {it.name="conductor-${it.name}"}
+
