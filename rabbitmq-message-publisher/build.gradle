@@ -1,0 +1,21 @@
+plugins {
+    id 'groovy'
+}
+dependencies {
+
+    implementation project(':conductor-common')
+    implementation project(':conductor-core')
+    implementation project(':conductor-amqp')
+
+    implementation "com.rabbitmq:amqp-client:${revAmqpClient}"
+
+    implementation "org.apache.commons:commons-lang3:"
+    implementation "com.google.guava:guava:${revGuava}"
+    implementation "io.reactivex:rxjava:${revRxJava}"
+
+    compileOnly 'org.springframework.boot:spring-boot-starter'
+    compileOnly 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
