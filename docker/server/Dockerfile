@@ -36,7 +36,7 @@ WORKDIR /conductor/ui
 
 # Include monaco sources into bundle (instead of using CDN)
 ENV REACT_APP_MONACO_EDITOR_USING_CDN=false
-RUN yarn install && cp -r node_modules/monaco-editor public/ && yarn build
+# RUN yarn install && cp -r node_modules/monaco-editor public/ && yarn build
 RUN ls -ltr
 RUN echo "Done building UI"
 
@@ -62,7 +62,7 @@ COPY --from=builder /conductor/server/build/libs/*boot*.jar /app/libs/conductor-
 # Copy compiled UI assets to nginx www directory
 WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
-COPY --from=ui-builder /conductor/ui/build .
+# COPY --from=ui-builder /conductor/ui/build .
 COPY --from=ui-builder /conductor/docker/server/nginx/nginx.conf /etc/nginx/http.d/default.conf
 
 # Copy the files for the server into the app folders
