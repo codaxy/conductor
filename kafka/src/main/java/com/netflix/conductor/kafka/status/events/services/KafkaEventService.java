@@ -14,7 +14,5 @@ package com.netflix.conductor.kafka.status.events.services;
 
 public interface KafkaEventService {
 
-    <T> void produceEvent(T payload, String topic) throws Exception;
-
     <V> void produce(String key, V message, String topic) throws Exception;
 }

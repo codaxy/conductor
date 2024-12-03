@@ -12,13 +12,12 @@
  */
 package com.netflix.conductor.kafka.status.events.listener;
 
-import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.conductor.core.listener.WorkflowStatusListener;
-import com.netflix.conductor.kafka.status.events.Event;
 import com.netflix.conductor.kafka.status.events.config.KafkaProperties;
 import com.netflix.conductor.kafka.status.events.services.KafkaEventService;
 import com.netflix.conductor.model.WorkflowModel;
@@ -76,11 +75,10 @@ public class WorkflowStatusKafkaProducer implements WorkflowStatusListener {
 
     private void produceMessage(WorkflowModel workflowModel) {
         try {
-            Event<WorkflowModel> event = new Event<>(workflowModel);
-            event.setEventType("Workflow." + workflowModel.getStatus().name());
-            event.setEventTime(OffsetDateTime.now());
             kafkaEventService.produce(
-                    event.getEventId(), event, kafkaProperties.getWorkflowStatusTopic());
+                    UUID.randomUUID().toString(),
+                    workflowModel,
+                    kafkaProperties.getWorkflowStatusTopic());
 
         } catch (Exception e) {
             LOGGER.error(

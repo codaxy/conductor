@@ -12,13 +12,12 @@
  */
 package com.netflix.conductor.kafka.status.events.listener;
 
-import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.netflix.conductor.core.listener.TaskStatusListener;
-import com.netflix.conductor.kafka.status.events.Event;
 import com.netflix.conductor.kafka.status.events.config.KafkaProperties;
 import com.netflix.conductor.kafka.status.events.services.KafkaEventService;
 import com.netflix.conductor.model.TaskModel;
@@ -87,11 +86,8 @@ public class TaskStatusKafkaProducer implements TaskStatusListener {
     private void produceMessage(TaskModel task) {
         try {
             if (IsStatusEnabled(task)) {
-                Event<TaskModel> event = new Event<>(task);
-                event.setEventType("Task." + task.getStatus().name());
-                event.setEventTime(OffsetDateTime.now());
                 kafkaEventService.produce(
-                        event.getEventId(), event, kafkaProperties.getTaskStatusTopic());
+                        UUID.randomUUID().toString(), task, kafkaProperties.getTaskStatusTopic());
             }
 
         } catch (Exception e) {

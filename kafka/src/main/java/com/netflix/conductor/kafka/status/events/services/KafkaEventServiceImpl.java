@@ -13,7 +13,6 @@
 package com.netflix.conductor.kafka.status.events.services;
 
 import java.net.InetAddress;
-import java.time.OffsetDateTime;
 import java.util.Properties;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -24,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.netflix.conductor.kafka.status.events.Event;
 import com.netflix.conductor.kafka.status.events.config.KafkaProperties;
 
 public class KafkaEventServiceImpl implements KafkaEventService {
@@ -35,14 +33,6 @@ public class KafkaEventServiceImpl implements KafkaEventService {
 
     public KafkaEventServiceImpl(KafkaProperties kafkaProperties) {
         this.kafkaProperties = kafkaProperties;
-    }
-
-    @Override
-    public <T> void produceEvent(T payload, String topic) throws Exception {
-        Event<T> event = new Event<>(payload);
-        event.setEventTime(OffsetDateTime.now());
-
-        produce(event.getEventId(), event, topic);
     }
 
     @Override
