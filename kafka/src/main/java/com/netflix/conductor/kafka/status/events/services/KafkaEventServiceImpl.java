@@ -28,8 +28,34 @@ import com.netflix.conductor.kafka.status.events.config.KafkaProperties;
 public class KafkaEventServiceImpl implements KafkaEventService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaEventServiceImpl.class);
+    private static KafkaProducer kafkaProducer;
 
-    @Autowired private final KafkaProperties kafkaProperties;
+    private static <V> KafkaProducer getKafkaProducer(KafkaProperties kafkaProperties) throws Exception {
+        if (kafkaProducer == null) {
+            Properties producerConfig = new Properties();
+            producerConfig.put(
+                    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
+            producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
+            producerConfig.put(
+                    ProducerConfig.CLIENT_ID_CONFIG, InetAddress.getLocalHost().getHostName());
+            producerConfig.put(
+                    ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+            KafkaJsonSerializer<V> jsonSerializer = new KafkaJsonSerializer<>();
+            try (KafkaProducer<String, V> producer = new KafkaProducer<>(producerConfig, new StringSerializer(),
+                    jsonSerializer)) {
+                kafkaProducer = producer;
+            } catch (Exception e) {
+                LOGGER.error("Failed to create producer.", e);
+                throw e;
+            }
+        }
+
+        return kafkaProducer;
+    }
+
+    @Autowired
+    private final KafkaProperties kafkaProperties;
 
     public KafkaEventServiceImpl(KafkaProperties kafkaProperties) {
         this.kafkaProperties = kafkaProperties;
@@ -37,42 +63,21 @@ public class KafkaEventServiceImpl implements KafkaEventService {
 
     @Override
     public <V> void produce(String key, V message, String topic) throws Exception {
+        KafkaProducer<String, V> producer = getKafkaProducer(kafkaProperties);
+        final ProducerRecord<String, V> record = new ProducerRecord<>(topic, key, message);
 
-        Properties producerConfig = new Properties();
-        producerConfig.put(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
-        producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
-        producerConfig.put(
-                ProducerConfig.CLIENT_ID_CONFIG, InetAddress.getLocalHost().getHostName());
-        producerConfig.put(
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-
-        KafkaJsonSerializer<V> jsonSerializer = new KafkaJsonSerializer<>();
-
-        try (KafkaProducer<String, V> producer =
-                new KafkaProducer<>(producerConfig, new StringSerializer(), jsonSerializer)) {
-
-            final ProducerRecord<String, V> record = new ProducerRecord<>(topic, key, message);
-
-            producer.send(
-                    record,
-                    (metadata, exception) -> {
-                        if (exception != null) {
-                            LOGGER.error(
-                                    "Failed to send message to Kafka topic: {}", topic, exception);
-                        } else {
-                            LOGGER.info(
-                                    "Message sent to topic: {} with offset: {}",
-                                    topic,
-                                    metadata.offset());
-                        }
-                    });
-
-            producer.flush();
-
-        } catch (Exception e) {
-            LOGGER.error("Failed to create producer.", e);
-            throw e;
-        }
+        producer.send(
+                record,
+                (metadata, exception) -> {
+                    if (exception != null) {
+                        LOGGER.error(
+                                "Failed to send message to Kafka topic: {}", topic, exception);
+                    } else {
+                        LOGGER.info(
+                                "Message sent to topic: {} with offset: {}",
+                                topic,
+                                metadata.offset());
+                    }
+                });
     }
 }
