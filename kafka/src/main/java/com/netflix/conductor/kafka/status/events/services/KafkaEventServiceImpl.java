@@ -30,7 +30,8 @@ public class KafkaEventServiceImpl implements KafkaEventService {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaEventServiceImpl.class);
     private static KafkaProducer kafkaProducer;
 
-    private static <V> KafkaProducer getKafkaProducer(KafkaProperties kafkaProperties) throws Exception {
+    private static synchronized <V> KafkaProducer<String, V> getKafkaProducer(KafkaProperties kafkaProperties)
+            throws Exception {
         if (kafkaProducer == null) {
             Properties producerConfig = new Properties();
             producerConfig.put(
