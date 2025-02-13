@@ -43,9 +43,10 @@ public class KafkaEventServiceImpl implements KafkaEventService {
                     ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
             KafkaJsonSerializer<V> jsonSerializer = new KafkaJsonSerializer<>();
-            try (KafkaProducer<String, V> producer =
-                    new KafkaProducer<>(producerConfig, new StringSerializer(), jsonSerializer)) {
-                kafkaProducer = producer;
+            try {
+                KafkaProducer<String, V> producer = new KafkaProducer<>(producerConfig, new StringSerializer(),
+                        jsonSerializer);
+                return producer;
             } catch (Exception e) {
                 LOGGER.error("Failed to create producer.", e);
                 throw e;
@@ -55,7 +56,8 @@ public class KafkaEventServiceImpl implements KafkaEventService {
         return kafkaProducer;
     }
 
-    @Autowired private final KafkaProperties kafkaProperties;
+    @Autowired
+    private final KafkaProperties kafkaProperties;
 
     public KafkaEventServiceImpl(KafkaProperties kafkaProperties) {
         this.kafkaProperties = kafkaProperties;
