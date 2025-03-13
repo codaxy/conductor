@@ -53,6 +53,7 @@ import com.netflix.conductor.core.execution.evaluators.Evaluator;
 import com.netflix.conductor.core.execution.mapper.*;
 import com.netflix.conductor.core.execution.tasks.*;
 import com.netflix.conductor.core.listener.TaskStatusListener;
+import com.netflix.conductor.core.listener.TaskStatusListenerStub;
 import com.netflix.conductor.core.listener.WorkflowStatusListener;
 import com.netflix.conductor.core.metadata.MetadataMapperService;
 import com.netflix.conductor.core.utils.ExternalPayloadStorageUtils;
@@ -203,7 +204,8 @@ public class TestWorkflowExecutor {
                         systemTaskRegistry,
                         taskMappers,
                         new HashMap<>(),
-                        Duration.ofMinutes(60));
+                        Duration.ofMinutes(60),
+                        new TaskStatusListenerStub());
         MetadataMapperService metadataMapperService = new MetadataMapperService(metadataDAO);
 
         ConductorProperties properties = mock(ConductorProperties.class);

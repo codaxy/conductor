@@ -61,6 +61,7 @@ import com.netflix.conductor.core.execution.tasks.Join;
 import com.netflix.conductor.core.execution.tasks.Switch;
 import com.netflix.conductor.core.execution.tasks.SystemTaskRegistry;
 import com.netflix.conductor.core.execution.tasks.WorkflowSystemTask;
+import com.netflix.conductor.core.listener.TaskStatusListenerStub;
 import com.netflix.conductor.core.utils.ExternalPayloadStorageUtils;
 import com.netflix.conductor.core.utils.IDGenerator;
 import com.netflix.conductor.core.utils.ParametersUtils;
@@ -187,7 +188,8 @@ public class TestDeciderOutcomes {
                         systemTaskRegistry,
                         taskMappers,
                         new HashMap<>(),
-                        Duration.ofMinutes(60));
+                        Duration.ofMinutes(60),
+                        new TaskStatusListenerStub());
     }
 
     @Test

@@ -37,6 +37,7 @@ import com.netflix.conductor.core.exception.TerminateWorkflowException;
 import com.netflix.conductor.core.execution.mapper.TaskMapper;
 import com.netflix.conductor.core.execution.mapper.TaskMapperContext;
 import com.netflix.conductor.core.execution.tasks.SystemTaskRegistry;
+import com.netflix.conductor.core.listener.TaskStatusListener;
 import com.netflix.conductor.core.utils.ExternalPayloadStorageUtils;
 import com.netflix.conductor.core.utils.IDGenerator;
 import com.netflix.conductor.core.utils.ParametersUtils;
@@ -66,7 +67,7 @@ public class DeciderService {
     private final MetadataDAO metadataDAO;
     private final SystemTaskRegistry systemTaskRegistry;
     private final long taskPendingTimeThresholdMins;
-
+    private final TaskStatusListener taskStatusListener;
     private final Map<String, TaskMapper> taskMappers;
 
     public DeciderService(
@@ -78,7 +79,8 @@ public class DeciderService {
             @Qualifier("taskMappersByTaskType") Map<String, TaskMapper> taskMappers,
             @Qualifier("annotatedTaskSystems") Map<String, TaskMapper> annotatedTaskSystems,
             @Value("${conductor.app.taskPendingTimeThreshold:60m}")
-                    Duration taskPendingTimeThreshold) {
+                    Duration taskPendingTimeThreshold,
+            TaskStatusListener taskStatusListener) {
         this.idGenerator = idGenerator;
         this.metadataDAO = metadataDAO;
         this.parametersUtils = parametersUtils;
@@ -86,6 +88,7 @@ public class DeciderService {
         this.externalPayloadStorageUtils = externalPayloadStorageUtils;
         this.taskPendingTimeThresholdMins = taskPendingTimeThreshold.toMinutes();
         this.systemTaskRegistry = systemTaskRegistry;
+        this.taskStatusListener = taskStatusListener;
         LOGGER.info("taskMappers: {}", taskMappers.keySet());
         LOGGER.info("annotatedTaskMappers: {}", annotatedTaskSystems.keySet());
         // Add annotated mappers only if no existing mapper is registered for that task
@@ -885,10 +888,12 @@ public class DeciderService {
             case RETRY:
                 task.setStatus(TIMED_OUT);
                 task.setReasonForIncompletion(reason);
+                taskStatusListener.onTaskTimedOutIfEnabled(task);
                 return;
             case TIME_OUT_WF:
                 task.setStatus(TIMED_OUT);
                 task.setReasonForIncompletion(reason);
+                taskStatusListener.onTaskTimedOutIfEnabled(task);
                 throw new TerminateWorkflowException(reason, WorkflowModel.Status.TIMED_OUT, task);
         }
     }
@@ -963,6 +968,7 @@ public class DeciderService {
         LOGGER.debug(reason);
         task.setStatus(TIMED_OUT);
         task.setReasonForIncompletion(reason);
+        taskStatusListener.onTaskTimedOutIfEnabled(task);
     }
 
     public List<TaskModel> getTasksToBeScheduled(
