@@ -16,6 +16,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import com.netflix.conductor.core.listener.TaskStatusListener;
 import com.netflix.conductor.core.listener.WorkflowStatusListener;
@@ -39,17 +40,18 @@ public class KafkaConfiguration {
             havingValue = "kafka",
             matchIfMissing = false)
     @Bean
-    public TaskStatusListener taskStatusPublisherRabbitMQ(
+    public TaskStatusListener taskStatusPublisherKafka(
             KafkaEventService kafkaEventService, KafkaProperties kafkaProperties) {
         return new TaskStatusKafkaProducer(kafkaEventService, kafkaProperties);
     }
 
+    @Primary
     @ConditionalOnProperty(
             name = "conductor.workflow-status-listener.type",
             havingValue = "kafka",
             matchIfMissing = false)
     @Bean
-    public WorkflowStatusListener workflowStatusListenerRabbitMQ(
+    public WorkflowStatusListener workflowStatusListenerKafka(
             KafkaEventService kafkaEventService, KafkaProperties kafkaProperties) {
         return new WorkflowStatusKafkaProducer(kafkaEventService, kafkaProperties);
     }
