@@ -10,7 +10,9 @@
 # ===========================================================================================================
 # 0. Builder stage
 # ===========================================================================================================
-FROM azul/zulu-openjdk-debian:21 AS builder
+# The Gradle build produces an architecture-neutral JAR, so keep it on the
+# native build platform instead of running it through QEMU for ARM64 images.
+FROM --platform=$BUILDPLATFORM azul/zulu-openjdk-debian:21 AS builder
 
 ARG PREBUILT=false
 ARG INDEXING_BACKEND=elasticsearch
@@ -35,7 +37,8 @@ RUN if [ "$PREBUILT" = "true" ]; then \
 # ===========================================================================================================
 # 1. UI builder stage
 # ===========================================================================================================
-FROM node:lts AS ui-builder
+# The UI build also produces architecture-neutral static assets.
+FROM --platform=$BUILDPLATFORM node:lts AS ui-builder
 
 ARG PREBUILT=false
 ARG SKIP_UI=false
