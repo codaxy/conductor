@@ -36,6 +36,7 @@ import com.netflix.conductor.common.metadata.workflow.WorkflowTask;
 import com.netflix.conductor.core.execution.DeciderService;
 import com.netflix.conductor.core.execution.WorkflowExecutor;
 import com.netflix.conductor.core.execution.tasks.SystemTaskRegistry;
+import com.netflix.conductor.core.listener.TaskStatusListenerStub;
 import com.netflix.conductor.core.utils.ExternalPayloadStorageUtils;
 import com.netflix.conductor.core.utils.IDGenerator;
 import com.netflix.conductor.core.utils.ParametersUtils;
@@ -374,7 +375,8 @@ public class HttpTaskTest {
                         systemTaskRegistry,
                         Collections.emptyMap(),
                         Collections.emptyMap(),
-                        Duration.ofMinutes(60))
+                        Duration.ofMinutes(60),
+                        new TaskStatusListenerStub())
                 .decide(workflow);
     }
 }

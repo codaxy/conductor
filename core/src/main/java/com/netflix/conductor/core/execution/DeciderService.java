@@ -888,12 +888,12 @@ public class DeciderService {
             case RETRY:
                 task.setStatus(TIMED_OUT);
                 task.setReasonForIncompletion(reason);
-                taskStatusListener.onTaskTimedOutIfEnabled(task);
+                notifyTaskTimedOut(task);
                 return;
             case TIME_OUT_WF:
                 task.setStatus(TIMED_OUT);
                 task.setReasonForIncompletion(reason);
-                taskStatusListener.onTaskTimedOutIfEnabled(task);
+                notifyTaskTimedOut(task);
                 throw new TerminateWorkflowException(reason, WorkflowModel.Status.TIMED_OUT, task);
         }
     }
@@ -968,7 +968,23 @@ public class DeciderService {
         LOGGER.debug(reason);
         task.setStatus(TIMED_OUT);
         task.setReasonForIncompletion(reason);
-        taskStatusListener.onTaskTimedOutIfEnabled(task);
+        notifyTaskTimedOut(task);
+    }
+
+    /**
+     * Reports a timeout the decider detected. A publishing failure must not stop the timeout
+     * itself, so it is logged, like every other status listener call in WorkflowExecutorOps.
+     */
+    private void notifyTaskTimedOut(TaskModel task) {
+        try {
+            taskStatusListener.onTaskTimedOutIfEnabled(task);
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Error while notifying TaskStatusListener: {} for workflow: {}",
+                    task.getTaskId(),
+                    task.getWorkflowInstanceId(),
+                    e);
+        }
     }
 
     public List<TaskModel> getTasksToBeScheduled(
