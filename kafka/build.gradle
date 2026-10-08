@@ -15,6 +15,7 @@ dependencies {
     implementation "javax.ws.rs:jsr311-api:${revJsr311Api}"
     implementation "io.reactivex:rxjava:${revRxJava}"
     implementation "org.apache.kafka:kafka-clients:${revKafka}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${revFasterXml}"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-web'
 

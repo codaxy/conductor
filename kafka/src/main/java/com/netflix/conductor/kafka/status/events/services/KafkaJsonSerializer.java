@@ -13,13 +13,19 @@
 package com.netflix.conductor.kafka.status.events.services;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Serializer;
 
+import com.netflix.conductor.common.metadata.tasks.TaskDef;
+import com.netflix.conductor.model.TaskModel;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 public class KafkaJsonSerializer<T> implements Serializer<T> {
@@ -29,7 +35,19 @@ public class KafkaJsonSerializer<T> implements Serializer<T> {
     public KafkaJsonSerializer() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
+        // Newer Jackson refuses to serialize Optional without this module.
+        this.objectMapper.registerModule(new Jdk8Module());
+        this.objectMapper.addMixIn(TaskModel.class, TaskModelMixIn.class);
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
+
+    /**
+     * Keeps the status event shape consumers know: 3.21.21 marked {@code getTaskDefinition()}
+     * {@code @JsonIgnore}, 3.32.5 does not. The definition stays under {@code workflowTask}.
+     */
+    private abstract static class TaskModelMixIn {
+        @JsonIgnore
+        abstract Optional<TaskDef> getTaskDefinition();
     }
 
     @Override
