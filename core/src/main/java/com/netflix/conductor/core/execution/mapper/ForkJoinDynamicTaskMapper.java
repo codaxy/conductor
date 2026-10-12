@@ -248,6 +248,22 @@ public class ForkJoinDynamicTaskMapper implements TaskMapper {
                     throw new TerminateWorkflowException(terminateMessage);
                 }
 
+                // Codaxy fork: 3.21.21 also put a forked sub-workflow's item input at the top level
+                // of its task input, and the CxO ordering engines read it there (e.g. item_id).
+                // Only missing keys are added, so nothing 3.32.5 sets (even to null) changes.
+                Map<String, Object> itemInput = tasksInput.get(dynForkTask.getTaskReferenceName());
+                if (SUB_WORKFLOW.name().equals(dynForkTask.getType()) && itemInput != null) {
+                    for (TaskModel forkedTask : forkedTasks) {
+                        Map<String, Object> taskInput = forkedTask.getInputData();
+                        itemInput.forEach(
+                                (key, value) -> {
+                                    if (!taskInput.containsKey(key)) {
+                                        taskInput.put(key, value);
+                                    }
+                                });
+                    }
+                }
+
                 mappedTasks.addAll(forkedTasks);
                 // Get the last of the dynamic tasks so that the join can be performed once this
                 // task is
