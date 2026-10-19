@@ -63,7 +63,9 @@ ext {
     revJsr311Api = '1.1.1'
     revMockServerClient = '5.12.0'
     revSpringDoc = '2.8.6'
-    revOrkesQueues = '2.0.0.rc3'
+    // PINNED (orkes-io/orkes-queues#30): 2.0.0.rc3's background poller can stop delivering a queue
+    // for good (JOIN first) until the JVM restarts. rc2 has no poller and is what 3.30.x shipped.
+    revOrkesQueues = '2.0.0.rc2'
     revPowerMock = '2.0.9'
     revProtogenAnnotations = '1.0.0'
     revProtogenCodegen = '1.4.0'

@@ -98,6 +98,7 @@ The issue number links back to https://github.com/conductor-oss/conductor/issues
 | `org.codehaus.jettison:jettison` | `strictly 1.5.4` | Gradle `strictly` constraint — no higher version has been validated |
 | `org.conductoross:conductor-client` in `test-harness` | `5.0.1` | Fat JAR classpath conflict with conductor-common; resolved via a stripped JAR task |
 | `org.awaitility:awaitility` in functional tests | `4.x` | e2e tests call `pollInterval(Duration)` added in Awaitility 4.0 |
+| `io.orkes.queues:orkes-conductor-queues` | `2.0.0.rc2` | rc3's background poller can stop delivering a queue for good until the JVM restarts ([orkes-io/orkes-queues#30](https://github.com/orkes-io/orkes-queues/pull/30)) |
 
 ### Before bumping a PINNED dependency
 
