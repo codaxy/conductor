@@ -16,6 +16,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Properties;
 
@@ -35,6 +36,12 @@ public class KafkaEventServiceImpl implements KafkaEventService, AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaEventServiceImpl.class);
 
     private static final String DEFAULT_CLIENT_ID = "conductor-status-producer";
+
+    /**
+     * Upper bound for closing the producer on shutdown. Without it, close waits indefinitely for
+     * unsent events, which would hold up shutdown while Kafka is unreachable.
+     */
+    static final Duration CLOSE_TIMEOUT = Duration.ofSeconds(10);
 
     /** Certificates and keys given as PEM text in config; only file locations are supported. */
     static final List<String> INLINE_CERTIFICATE_CONFIGS =
@@ -188,7 +195,7 @@ public class KafkaEventServiceImpl implements KafkaEventService, AutoCloseable {
     @Override
     public synchronized void close() {
         if (kafkaProducer != null) {
-            kafkaProducer.close();
+            kafkaProducer.close(CLOSE_TIMEOUT);
             kafkaProducer = null;
         }
     }

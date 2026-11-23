@@ -88,7 +88,8 @@ would require the bootstrap address to resolve at startup.
 The producer moves from a `static` field to an instance field, so service instances with
 different settings no longer share whichever producer was created first. Conductor creates
 one service bean, so runtime behaviour is unchanged. The service implements `AutoCloseable`;
-Spring calls `close()` on shutdown, which flushes and closes the producer.
+Spring calls `close()` on shutdown, which closes the producer and waits at most 10 seconds
+for events still being sent, so a Kafka outage cannot hold up shutdown indefinitely.
 
 ### 5. Keep kafka-clients at 3.9.1
 
