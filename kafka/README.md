@@ -181,3 +181,120 @@ Task status transitions to `COMPLETED`.
 
 The task is marked as `FAILED` if the message could not be published to
 the Kafka queue.
+## Kafka Status Events
+
+Conductor can publish task and workflow status changes to Kafka topics.
+
+```properties
+conductor.message-publisher.type=kafka
+conductor.task-status-listener.type=kafka
+conductor.workflow-status-listener.type=kafka
+conductor.message-publisher.kafka.bootstrapServers=kafka:9092
+conductor.message-publisher.kafka.taskStatusTopic=conductor-task-status
+conductor.message-publisher.kafka.workflowStatusTopic=conductor-workflow-status
+conductor.message-publisher.kafka.allowedTaskStatuses=COMPLETED,FAILED
+```
+
+### Security
+
+By default the producer connects without encryption or authentication (`PLAINTEXT`).
+Any [Kafka producer setting](https://kafka.apache.org/39/documentation/#producerconfigs)
+can be set under `conductor.message-publisher.kafka.producer.*`, which is how SSL, mTLS,
+SASL_SSL and SASL_PLAINTEXT are enabled. Examples below omit the
+`conductor.message-publisher.kafka.producer.` prefix for brevity; every line needs it.
+
+Conductor checks these settings at startup and fails to start if a value is invalid or a
+keystore or truststore file is missing or unreadable. Unknown settings are logged as a warning.
+`key.serializer` and `value.serializer` cannot be changed.
+
+#### SSL (encryption, broker authenticated)
+
+```properties
+security.protocol=SSL
+ssl.truststore.type=PKCS12
+ssl.truststore.location=/etc/conductor/kafka/truststore.p12
+ssl.truststore.password=${KAFKA_TRUSTSTORE_PASSWORD}
+```
+
+With a PEM file holding the CA certificate(s):
+
+```properties
+security.protocol=SSL
+ssl.truststore.type=PEM
+ssl.truststore.location=/etc/conductor/kafka/ca.crt
+```
+
+The truststore can be omitted if the broker's certificate is signed by a CA the JVM already
+trusts.
+
+#### mTLS (SSL with a client certificate)
+
+The broker listener must have `ssl.client.auth=required`. Add a keystore to the SSL settings:
+
+```properties
+ssl.keystore.type=PKCS12
+ssl.keystore.location=/etc/conductor/kafka/client.p12
+ssl.keystore.password=${KAFKA_KEYSTORE_PASSWORD}
+```
+
+or, in PEM format:
+
+```properties
+ssl.keystore.type=PEM
+ssl.keystore.location=/etc/conductor/kafka/client.pem
+# Only when the private key is encrypted:
+# ssl.key.password=${KAFKA_KEY_PASSWORD}
+```
+
+A PEM keystore file contains the private key in PKCS#8 format (`BEGIN PRIVATE KEY` or
+`BEGIN ENCRYPTED PRIVATE KEY`) followed by the client certificate and any intermediate
+certificates. Do not set `ssl.keystore.password` for PEM.
+
+#### SASL_SSL (encryption, user name and password)
+
+```properties
+security.protocol=SASL_SSL
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="conductor" password="${KAFKA_PASSWORD}";
+ssl.truststore.type=PEM
+ssl.truststore.location=/etc/conductor/kafka/ca.crt
+```
+
+For `PLAIN`, use `sasl.mechanism=PLAIN` and
+`org.apache.kafka.common.security.plain.PlainLoginModule`. `SCRAM-SHA-256` works the same way
+as `SCRAM-SHA-512`.
+
+#### SASL_PLAINTEXT (user name and password, no encryption)
+
+```properties
+security.protocol=SASL_PLAINTEXT
+sasl.mechanism=SCRAM-SHA-512
+sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="conductor" password="${KAFKA_PASSWORD}";
+```
+
+Status events, and with `PLAIN` the password, cross the network unencrypted. Use it only on a
+trusted network.
+
+#### Certificates and keys
+
+- Certificates and keys must be files. Inline PEM settings (`ssl.keystore.key`,
+  `ssl.keystore.certificate.chain`, `ssl.truststore.certificates`) are not supported and
+  stop Conductor from starting.
+- Supply passwords and `sasl.jaas.config` credentials through environment variables or a
+  secret store using `${...}` placeholders rather than writing them into the properties file.
+- The producer reads certificates and credentials once. After renewing a certificate or
+  changing a password, restart Conductor.
+
+Converting between formats with `openssl`:
+
+```shell
+# PEM key and certificate to a PKCS12 keystore
+openssl pkcs12 -export -inkey client.key -in client.crt -certfile ca.crt -out client.p12
+
+# PKCS12 keystore to a PEM keystore file (unencrypted PKCS#8 key followed by certificates)
+openssl pkcs12 -in client.p12 -nocerts -nodes | openssl pkcs8 -topk8 -nocrypt > client.pem
+openssl pkcs12 -in client.p12 -nokeys >> client.pem
+
+# Older "BEGIN RSA PRIVATE KEY" files to PKCS#8
+openssl pkcs8 -topk8 -nocrypt -in client.key -out client-pkcs8.key
+```
