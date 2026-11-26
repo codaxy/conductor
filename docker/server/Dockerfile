@@ -38,7 +38,7 @@ RUN if [ "$PREBUILT" = "true" ]; then \
 # 1. UI builder stage
 # ===========================================================================================================
 # The UI build also produces architecture-neutral static assets.
-FROM --platform=$BUILDPLATFORM node:lts AS ui-builder
+FROM --platform=$BUILDPLATFORM node:22 AS ui-builder
 
 ARG PREBUILT=false
 ARG SKIP_UI=false
