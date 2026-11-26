@@ -27,4 +27,6 @@ dependencies {
     testImplementation project(':conductor-test-util')
     testImplementation project(':conductor-test-util').sourceSets.test.output
     testImplementation "redis.clients:jedis:${revJedis}"
+    testImplementation "org.testcontainers:testcontainers:${revTestContainer}"
+    testImplementation "org.testcontainers:junit-jupiter:${revTestContainer}"
 }

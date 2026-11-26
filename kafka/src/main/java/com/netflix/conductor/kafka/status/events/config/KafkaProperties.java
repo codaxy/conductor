@@ -13,7 +13,9 @@
 package com.netflix.conductor.kafka.status.events.config;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -51,6 +53,18 @@ public class KafkaProperties {
         this.allowedTaskStatuses = allowedTaskStatuses;
     }
 
+    /**
+     * Additional Kafka producer settings, e.g. {@code security.protocol}, {@code ssl.*} and {@code
+     * sasl.*}. Keys are Kafka producer config names.
+     */
+    public Map<String, String> getProducer() {
+        return producer;
+    }
+
+    public void setProducer(Map<String, String> producer) {
+        this.producer = producer;
+    }
+
     public boolean isAlwaysPublishWorkflowStatusEnabled() {
         return alwaysPublishWorkflowStatusEnabled;
     }
@@ -64,4 +78,5 @@ public class KafkaProperties {
     private String bootstrapServers = "";
     private String taskStatusTopic = "conductor-task-status";
     private String workflowStatusTopic = "conductor-workflow-status";
+    private Map<String, String> producer = new HashMap<>();
 }
